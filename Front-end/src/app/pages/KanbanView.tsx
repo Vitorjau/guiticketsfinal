@@ -1,6 +1,7 @@
 import { useDrag, useDrop } from 'react-dnd';
 import { Clock, User, ClipboardList, Eye, Trash2, Edit, CheckCircle2 } from 'lucide-react';
-import { useState, MouseEvent } from 'react';
+import { useState } from 'react';
+import type { MouseEvent } from 'react';
 import type { Ticket, Task } from '../App';
 import { Button } from '../components/ui/button';
 import { CreateTaskWarningModal } from '../components/CreateTaskWarningModal';
@@ -345,7 +346,6 @@ export function KanbanView({ tickets, tasks, onCreateTask, onUpdateTicketStatus,
   };
 
   const selectedTask = selectedItemId ? tasks.find(t => t.id === selectedItemId) : null;
-  const selectedTicket = selectedItemId ? tickets.find(t => t.id === selectedItemId) : null;
 
   return (
     <div className="h-full flex flex-col">
