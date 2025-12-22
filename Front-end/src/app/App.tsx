@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { ThemeProvider } from './contexts/ThemeContext';
@@ -13,6 +13,7 @@ import { ProfilePage } from './pages/ProfilePage';
 import { CreateTicketModal } from './components/CreateTicketModal';
 import { Toaster } from './components/ui/sonner';
 import { toast } from 'sonner';
+import * as api from './api/client';
 
 type Page = 'login' | 'register' | 'kanban' | 'my-tickets' | 'open-tickets' | 'in-progress-tickets' | 'waiting-tickets' | 'completed-tickets' | 'ticket-detail' | 'profile';
 type UserRole = 'requester' | 'agent';
@@ -216,7 +217,21 @@ function App() {
     }
   ]);
 
-  const handleLogin = (email: string, password: string) => {
+  // Fetch tickets from backend on mount (best-effort)
+  useEffect(() => {
+    (async () => {
+      try {
+        const backendTickets = await api.getTickets();
+        if (backendTickets?.length) {
+          setTickets(backendTickets as any);
+        }
+      } catch (e) {
+        // silent fallback to local mocked tickets
+      }
+    })();
+  }, []);
+
+  const handleLogin = async (email: string, password: string) => {
     // Normaliza o email (remove espaços e converte para lowercase)
     const normalizedEmail = email.trim().toLowerCase();
     
@@ -224,14 +239,25 @@ function App() {
     if (password.length >= 3) {
       const role: UserRole = normalizedEmail.includes('@agente.com') ? 'agent' : 'requester';
       const name = normalizedEmail.split('@')[0];
-      
-      setCurrentUser({ 
-        id: `user-${normalizedEmail}`,
-        name: name.charAt(0).toUpperCase() + name.slice(1), // Capitaliza primeira letra
-        email: normalizedEmail, 
-        role 
-      });
-      
+
+      // Best-effort: ensure user exists in backend and use its id
+      try {
+        const beUser = await api.findOrCreateUser({
+          name: name.charAt(0).toUpperCase() + name.slice(1),
+          email: normalizedEmail,
+          passwordHash: password, // demo only, server expects a hash field name
+          role: role === 'agent' ? 'AGENT' : 'REQUESTER',
+        });
+        setCurrentUser({ id: beUser.id, name: beUser.name, email: beUser.email, role });
+      } catch {
+        setCurrentUser({ 
+          id: `user-${normalizedEmail}`,
+          name: name.charAt(0).toUpperCase() + name.slice(1),
+          email: normalizedEmail, 
+          role 
+        });
+      }
+
       // Redireciona baseado no perfil
       setCurrentPage(role === 'agent' ? 'kanban' : 'my-tickets');
       
@@ -249,12 +275,20 @@ function App() {
     }
   };
 
-  const handleRegister = (name: string, email: string, password: string, role: UserRole) => {
-    // Mock register
+  const handleRegister = async (name: string, email: string, password: string, role: UserRole) => {
     if (password.length > 0) {
       const normalizedEmail = email.trim().toLowerCase();
-      setCurrentUser({ id: `user-${normalizedEmail}`, name, email: normalizedEmail, role });
-      // Redireciona baseado no perfil
+      try {
+        const beUser = await api.findOrCreateUser({
+          name,
+          email: normalizedEmail,
+          passwordHash: password,
+          role: role === 'agent' ? 'AGENT' : 'REQUESTER',
+        });
+        setCurrentUser({ id: beUser.id, name: beUser.name, email: beUser.email, role });
+      } catch {
+        setCurrentUser({ id: `user-${normalizedEmail}`, name, email: normalizedEmail, role });
+      }
       setCurrentPage(role === 'agent' ? 'kanban' : 'my-tickets');
     }
   };
@@ -264,7 +298,7 @@ function App() {
     setCurrentPage('login');
   };
 
-  const handleCreateTicket = (data: {
+  const handleCreateTicket = async (data: {
     title: string;
     description: string;
     priority: 'low' | 'medium' | 'high' | 'urgent';
@@ -302,8 +336,9 @@ function App() {
       assignedGroupId = systemToGroupMap[data.relatedSystem] || 'geral';
     }
 
+    const newId = `TCK-${String(tickets.length + 1).padStart(3, '0')}`;
     const newTicket: Ticket = {
-      id: `TCK-${String(tickets.length + 1).padStart(3, '0')}`,
+      id: newId,
       title: data.title,
       description: data.description,
       status: 'open',
@@ -331,9 +366,24 @@ function App() {
         });
       }, 100);
     }
+
+    // Best-effort send to backend
+    try {
+      if (currentUser) {
+        await api.createTicket({
+          id: newId,
+          title: data.title,
+          description: data.description,
+          authorId: currentUser.id,
+          priority: data.priority.toUpperCase() as any,
+          relatedSystem: data.relatedSystem,
+          assignmentGroupId: assignedGroupId,
+        });
+      }
+    } catch {}
   };
 
-  const handleUpdateTicketStatus = (ticketId: string, newStatus: Ticket['status']) => {
+  const handleUpdateTicketStatus = async (ticketId: string, newStatus: Ticket['status']) => {
     const ticket = tickets.find(t => t.id === ticketId);
     
     // Notifica quando um chamado concluído é reaberto
@@ -354,14 +404,22 @@ function App() {
       updates.completedByEmail = currentUser?.email;
     }
     
+    // optimistic update
     setTickets(tickets.map(ticket => 
       ticket.id === ticketId 
         ? { ...ticket, ...updates }
         : ticket
     ));
+
+    // attempt backend call
+    try {
+      await api.updateTicketStatus(ticketId, newStatus);
+    } catch (e) {
+      // revert if needed? keep optimistic for UX
+    }
   };
 
-  const handleAssignTicket = (ticketId: string) => {
+  const handleAssignTicket = async (ticketId: string) => {
     if (!currentUser) return;
 
     setTickets(tickets.map(ticket => 
@@ -376,12 +434,17 @@ function App() {
         : ticket
     ));
 
+    // backend attempt (best-effort, requires existing user in DB)
+    try {
+      await api.assignTicket(ticketId, currentUser.id);
+    } catch {}
+
     toast.success(`Chamado ${ticketId} atribuído para você!`, {
       description: 'O chamado foi movido para Em Atendimento.'
     });
   };
 
-  const handleReopenTicket = (ticketId: string) => {
+  const handleReopenTicket = async (ticketId: string) => {
     setTickets(tickets.map(ticket => 
       ticket.id === ticketId 
         ? { 
@@ -396,12 +459,14 @@ function App() {
         : ticket
     ));
 
+    try { await api.reopenTicket(ticketId); } catch {}
+
     toast.success(`Chamado ${ticketId} reaberto!`, {
       description: 'O chamado foi movido para Abertos.'
     });
   };
 
-  const handleAddMessage = (ticketId: string, content: string) => {
+  const handleAddMessage = async (ticketId: string, content: string) => {
     setTickets(tickets.map(ticket => {
       if (ticket.id === ticketId) {
         const newMessage: TicketMessage = {
@@ -420,6 +485,16 @@ function App() {
       }
       return ticket;
     }));
+
+    try {
+      await api.addMessage(ticketId, {
+        content,
+        authorId: currentUser?.id,
+        authorName: currentUser?.name || 'Usuário',
+        authorEmail: currentUser?.email || 'user@empresa.com',
+        isAgent: currentUser?.role === 'agent'
+      });
+    } catch {}
   };
 
   const handleCreateTask = (taskData: {
@@ -458,9 +533,10 @@ function App() {
     toast.success('Tarefa atualizada com sucesso!');
   };
 
-  const handleDeleteTicket = (ticketId: string) => {
+  const handleDeleteTicket = async (ticketId: string) => {
     setTickets(tickets.filter(ticket => ticket.id !== ticketId));
     toast.success(`Chamado ${ticketId} excluído com sucesso!`);
+    try { await api.deleteTicket(ticketId); } catch {}
   };
 
   const handleDeleteTask = (taskId: string) => {
