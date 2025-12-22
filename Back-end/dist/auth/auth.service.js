@@ -24,14 +24,21 @@ let AuthService = class AuthService {
         if (user.passwordHash !== dto.password) {
             throw new common_1.UnauthorizedException('Email ou senha inválidos');
         }
-        return user;
+        return {
+            ...user,
+            role: user.role.toLowerCase()
+        };
     }
     async register(dto) {
         const existing = await this.prisma.user.findUnique({ where: { email: dto.email } });
         if (existing)
             throw new common_1.BadRequestException('Email já cadastrado');
+        const isAgentEmail = dto.email.toLowerCase().endsWith('@agente.com');
         let role = 'REQUESTER';
         if (dto.agentCode) {
+            if (!isAgentEmail) {
+                throw new common_1.BadRequestException('Apenas emails @agente.com podem usar código de agente');
+            }
             const agentCode = await this.prisma.agentCode.findUnique({ where: { code: dto.agentCode } });
             if (!agentCode)
                 throw new common_1.BadRequestException('Código de agente inválido');
@@ -42,6 +49,9 @@ let AuthService = class AuthService {
                 where: { code: dto.agentCode },
                 data: { used: true, usedBy: 'pending' }
             });
+        }
+        else if (isAgentEmail) {
+            throw new common_1.BadRequestException('Emails @agente.com devem fornecer um código de agente válido');
         }
         const user = await this.prisma.user.create({
             data: {
@@ -57,7 +67,10 @@ let AuthService = class AuthService {
                 data: { usedBy: user.id }
             });
         }
-        return user;
+        return {
+            ...user,
+            role: user.role.toLowerCase()
+        };
     }
 };
 exports.AuthService = AuthService;

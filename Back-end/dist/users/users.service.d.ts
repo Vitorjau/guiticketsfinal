@@ -1,6 +1,8 @@
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { UpdateProfileDto } from './dto/update-profile.dto';
+import { ChangePasswordDto } from './dto/change-password.dto';
 export declare class UsersService {
     private readonly prisma;
     constructor(prisma: PrismaService);
@@ -40,6 +42,28 @@ export declare class UsersService {
         updatedAt: Date;
     }>;
     update(id: string, dto: UpdateUserDto): Promise<{
+        name: string;
+        email: string;
+        passwordHash: string;
+        role: import("@prisma/client").$Enums.Role;
+        gender: string | null;
+        phone: string | null;
+        id: string;
+        createdAt: Date;
+        updatedAt: Date;
+    }>;
+    updateProfile(id: string, dto: UpdateProfileDto): Promise<{
+        name: string;
+        email: string;
+        passwordHash: string;
+        role: import("@prisma/client").$Enums.Role;
+        gender: string | null;
+        phone: string | null;
+        id: string;
+        createdAt: Date;
+        updatedAt: Date;
+    }>;
+    changePassword(id: string, dto: ChangePasswordDto): Promise<{
         name: string;
         email: string;
         passwordHash: string;

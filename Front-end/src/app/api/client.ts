@@ -30,7 +30,7 @@ export type FrontendTicket = {
   messages: any[];
 };
 
-const BASE_URL = (import.meta as any).env?.VITE_API_URL || 'http://localhost:3000';
+const BASE_URL = (import.meta as any).env?.VITE_API_URL || 'http://localhost:3001';
 
 const mapStatusToFE = (s: BackendTicket['status']): FrontendTicket['status'] => {
   switch (s) {
@@ -156,5 +156,32 @@ export async function addMessage(id: string, payload: { content: string; authorI
     body: JSON.stringify(payload),
   });
   if (!res.ok) throw new Error('Failed to add message');
+  return await res.json();
+}
+
+// Profile endpoints
+export async function updateProfile(userId: string, payload: { name?: string; email?: string; phone?: string; gender?: string }) {
+  const res = await fetch(`${BASE_URL}/users/${userId}/profile`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  });
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({}));
+    throw new Error(errorData.message || 'Erro ao atualizar perfil');
+  }
+  return await res.json();
+}
+
+export async function changePassword(userId: string, payload: { currentPassword: string; newPassword: string; confirmPassword: string }) {
+  const res = await fetch(`${BASE_URL}/users/${userId}/password`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  });
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({}));
+    throw new Error(errorData.message || 'Erro ao alterar senha');
+  }
   return await res.json();
 }

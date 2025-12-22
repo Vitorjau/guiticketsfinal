@@ -17,7 +17,11 @@ export class AuthService {
       throw new UnauthorizedException('Email ou senha inválidos');
     }
 
-    return user;
+    // Return user with lowercase role for frontend compatibility
+    return {
+      ...user,
+      role: user.role.toLowerCase()
+    };
   }
 
   async register(dto: RegisterDto) {
@@ -68,6 +72,10 @@ export class AuthService {
       });
     }
 
-    return user;
+    // Return user with lowercase role for frontend compatibility
+    return {
+      ...user,
+      role: user.role.toLowerCase()
+    };
   }
 }

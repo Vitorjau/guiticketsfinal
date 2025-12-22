@@ -527,30 +527,7 @@ function App() {
     setCurrentPage('ticket-detail');
   };
 
-  const handleUpdateProfile = (updates: {
-    name?: string;
-    email?: string;
-    password?: string;
-    gender?: 'male' | 'female' | 'other' | 'prefer-not-say';
-    phone?: string;
-  }) => {
-    if (!currentUser) return;
-    
-    // Atualiza o perfil do usuário
-    setCurrentUser({
-      ...currentUser,
-      ...(updates.name && { name: updates.name }),
-      ...(updates.email && { email: updates.email }),
-      ...(updates.gender && { gender: updates.gender }),
-      ...(updates.phone !== undefined && { phone: updates.phone }),
-    });
-
-    // Em um app real, aqui você faria uma chamada à API para atualizar a senha
-    // Por enquanto, apenas simulamos a atualização
-    if (updates.password) {
-      console.log('Senha atualizada com sucesso (simulado)');
-    }
-  };
+  // Removido: `ProfilePage` agora chama backend e retorna usuário atualizado
 
   if (!currentUser) {
     if (currentPage === 'register') {
@@ -677,7 +654,12 @@ function App() {
           {currentPage === 'profile' && (
             <ProfilePage
               currentUser={currentUser}
-              onUpdateProfile={handleUpdateProfile}
+              onUserUpdated={(user) => {
+                setCurrentUser(user);
+                toast.success('Perfil atualizado!', {
+                  description: 'Suas alterações foram salvas com sucesso.'
+                });
+              }}
             />
           )}
         </DashboardLayout>

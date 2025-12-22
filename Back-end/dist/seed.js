@@ -43,6 +43,15 @@ async function main() {
         update: {},
         create: { key: 'suporte-ti', name: 'Suporte TI', color: '#3b82f6', description: 'Equipe de suporte técnico' },
     });
+    const defaultGroups = [
+        { key: 'infraestrutura', name: 'Infraestrutura', color: '#0ea5e9' },
+        { key: 'rh', name: 'RH', color: '#22c55e' },
+        { key: 'financeiro', name: 'Financeiro', color: '#f59e0b' },
+        { key: 'geral', name: 'Geral', color: '#64748b' },
+    ];
+    for (const g of defaultGroups) {
+        await prisma.assignmentGroup.upsert({ where: { key: g.key }, update: {}, create: { ...g } });
+    }
     await prisma.ticket.upsert({
         where: { id: 'TCK-001' },
         update: {},
@@ -67,6 +76,21 @@ async function main() {
             assignedToId: agent.id,
             assignmentGroupId: ti.id,
         },
+    });
+    await prisma.task.upsert({
+        where: { id: 'TASK-001' },
+        update: {},
+        create: { id: 'TASK-001', title: 'Configurar backup diário', status: 'TODO', priority: 'MEDIUM' },
+    });
+    await prisma.task.upsert({
+        where: { id: 'TASK-002' },
+        update: {},
+        create: { id: 'TASK-002', title: 'Atualizar antivírus em estações', status: 'IN_PROGRESS', priority: 'HIGH' },
+    });
+    await prisma.task.upsert({
+        where: { id: 'TASK-003' },
+        update: {},
+        create: { id: 'TASK-003', title: 'Documentar padrão de senhas', status: 'DONE', priority: 'LOW' },
     });
     console.log('Seed completed');
 }

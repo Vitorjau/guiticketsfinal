@@ -42,6 +42,43 @@ let UsersService = class UsersService {
         await this.findOne(id);
         return this.prisma.user.update({ where: { id }, data: dto });
     }
+    async updateProfile(id, dto) {
+        const user = await this.findOne(id);
+        if (dto.email && dto.email !== user.email) {
+            const existing = await this.prisma.user.findUnique({ where: { email: dto.email } });
+            if (existing)
+                throw new common_1.BadRequestException('Email já cadastrado');
+        }
+        return this.prisma.user.update({
+            where: { id },
+            data: {
+                name: dto.name || user.name,
+                email: dto.email || user.email,
+                phone: dto.phone,
+                gender: dto.gender,
+                updatedAt: new Date()
+            }
+        });
+    }
+    async changePassword(id, dto) {
+        const user = await this.findOne(id);
+        if (user.passwordHash !== dto.currentPassword) {
+            throw new common_1.BadRequestException('Senha atual incorreta');
+        }
+        if (dto.newPassword !== dto.confirmPassword) {
+            throw new common_1.BadRequestException('Senhas não conferem');
+        }
+        if (dto.newPassword === dto.currentPassword) {
+            throw new common_1.BadRequestException('Nova senha deve ser diferente da senha atual');
+        }
+        return this.prisma.user.update({
+            where: { id },
+            data: {
+                passwordHash: dto.newPassword,
+                updatedAt: new Date()
+            }
+        });
+    }
     async remove(id) {
         await this.findOne(id);
         return this.prisma.user.delete({ where: { id } });

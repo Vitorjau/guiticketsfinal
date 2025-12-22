@@ -3,7 +3,8 @@ import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import { Card } from '../components/ui/card';
-import { AlertCircle, CheckCircle, User, Mail, Lock, Save } from 'lucide-react';
+import { AlertCircle, CheckCircle, User, Lock, Save } from 'lucide-react';
+import * as api from '../api/client';
 
 interface ProfilePageProps {
   currentUser: {
@@ -14,16 +15,10 @@ interface ProfilePageProps {
     gender?: 'male' | 'female' | 'other' | 'prefer-not-say';
     phone?: string;
   };
-  onUpdateProfile: (updates: {
-    name?: string;
-    email?: string;
-    password?: string;
-    gender?: 'male' | 'female' | 'other' | 'prefer-not-say';
-    phone?: string;
-  }) => void;
+  onUserUpdated?: (user: any) => void;
 }
 
-export function ProfilePage({ currentUser, onUpdateProfile }: ProfilePageProps) {
+export function ProfilePage({ currentUser, onUserUpdated }: ProfilePageProps) {
   const [name, setName] = useState(currentUser.name);
   const [email, setEmail] = useState(currentUser.email);
   const [phone, setPhone] = useState(currentUser.phone || '');
@@ -37,60 +32,82 @@ export function ProfilePage({ currentUser, onUpdateProfile }: ProfilePageProps) 
   
   const [successMessage, setSuccessMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
+  const [loadingProfile, setLoadingProfile] = useState(false);
+  const [loadingPassword, setLoadingPassword] = useState(false);
 
-  const handleUpdateProfile = () => {
+  const handleUpdateProfile = async () => {
     setErrorMessage('');
     setSuccessMessage('');
+    setLoadingProfile(true);
 
     if (!name || !email) {
       setErrorMessage('Nome e e-mail são obrigatórios');
+      setLoadingProfile(false);
       return;
     }
 
     if (!email.includes('@')) {
       setErrorMessage('E-mail inválido');
+      setLoadingProfile(false);
       return;
     }
 
-    onUpdateProfile({
-      name,
-      email,
-      gender,
-      phone: phone || undefined,
-    });
-
-    setSuccessMessage('Perfil atualizado com sucesso!');
-    setTimeout(() => setSuccessMessage(''), 3000);
+    try {
+      const updatedUser = await api.updateProfile(currentUser.id, {
+        name,
+        email,
+        gender,
+        phone: phone || undefined,
+      });
+      setSuccessMessage('Perfil atualizado com sucesso!');
+      onUserUpdated?.(updatedUser);
+      setTimeout(() => setSuccessMessage(''), 3000);
+    } catch (err: any) {
+      setErrorMessage(err.message || 'Erro ao atualizar perfil');
+    } finally {
+      setLoadingProfile(false);
+    }
   };
 
-  const handleUpdatePassword = () => {
+  const handleUpdatePassword = async () => {
     setErrorMessage('');
     setSuccessMessage('');
+    setLoadingPassword(true);
 
     if (!currentPassword || !newPassword || !confirmPassword) {
       setErrorMessage('Preencha todos os campos de senha');
+      setLoadingPassword(false);
       return;
     }
 
-    if (newPassword.length < 6) {
-      setErrorMessage('A nova senha deve ter pelo menos 6 caracteres');
+    if (newPassword.length < 8) {
+      setErrorMessage('A nova senha deve ter pelo menos 8 caracteres');
+      setLoadingPassword(false);
       return;
     }
 
     if (newPassword !== confirmPassword) {
       setErrorMessage('As senhas não coincidem');
+      setLoadingPassword(false);
       return;
     }
 
-    onUpdateProfile({
-      password: newPassword,
-    });
-
-    setCurrentPassword('');
-    setNewPassword('');
-    setConfirmPassword('');
-    setSuccessMessage('Senha alterada com sucesso!');
-    setTimeout(() => setSuccessMessage(''), 3000);
+    try {
+      await api.changePassword(currentUser.id, {
+        currentPassword,
+        newPassword,
+        confirmPassword,
+      });
+      setCurrentPassword('');
+      setNewPassword('');
+      setConfirmPassword('');
+      setSuccessMessage('Senha alterada com sucesso! Faça login novamente com a nova senha.');
+      setTimeout(() => setSuccessMessage(''), 4000);
+    } catch (err: any) {
+      setErrorMessage(err.message || 'Erro ao alterar senha');
+    } finally {
+      setLoadingPassword(false);
+    }
   };
 
   return (
@@ -144,6 +161,7 @@ export function ProfilePage({ currentUser, onUpdateProfile }: ProfilePageProps) 
                   placeholder="Seu nome completo"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
+                  disabled={loadingProfile}
                   className="h-11 bg-[var(--app-surface-hover)] border-[var(--app-border)] text-[var(--app-text-primary)]"
                 />
               </div>
@@ -158,6 +176,7 @@ export function ProfilePage({ currentUser, onUpdateProfile }: ProfilePageProps) 
                   placeholder="seu@email.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
+                  disabled={loadingProfile}
                   className="h-11 bg-[var(--app-surface-hover)] border-[var(--app-border)] text-[var(--app-text-primary)]"
                 />
               </div>
@@ -174,6 +193,7 @@ export function ProfilePage({ currentUser, onUpdateProfile }: ProfilePageProps) 
                   placeholder="(00) 00000-0000"
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
+                  disabled={loadingProfile}
                   className="h-11 bg-[var(--app-surface-hover)] border-[var(--app-border)] text-[var(--app-text-primary)]"
                 />
               </div>
@@ -186,6 +206,7 @@ export function ProfilePage({ currentUser, onUpdateProfile }: ProfilePageProps) 
                   id="gender"
                   value={gender}
                   onChange={(e) => setGender(e.target.value as any)}
+                  disabled={loadingProfile}
                   className="h-11 w-full rounded-md border border-[var(--app-border)] bg-[var(--app-surface-hover)] px-3 text-[var(--app-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--app-blue-600)] focus:border-transparent"
                 >
                   <option value="prefer-not-say">Prefiro não informar</option>
@@ -217,10 +238,11 @@ export function ProfilePage({ currentUser, onUpdateProfile }: ProfilePageProps) 
             <div className="flex justify-end pt-2">
               <Button
                 onClick={handleUpdateProfile}
-                className="bg-[var(--app-blue-600)] hover:bg-[var(--app-blue-700)] text-white"
+                disabled={loadingProfile}
+                className="bg-[var(--app-blue-600)] hover:bg-[var(--app-blue-700)] text-white disabled:opacity-50"
               >
                 <Save className="w-4 h-4 mr-2" />
-                Salvar Alterações
+                {loadingProfile ? 'Salvando...' : 'Salvar Alterações'}
               </Button>
             </div>
           </div>
@@ -243,12 +265,13 @@ export function ProfilePage({ currentUser, onUpdateProfile }: ProfilePageProps) 
               <Label htmlFor="current-password" className="text-[var(--app-text-primary)]">
                 Senha Atual *
               </Label>
-              <Input
+                <Input
                 id="current-password"
                 type="password"
                 placeholder="Digite sua senha atual"
                 value={currentPassword}
-                onChange={(e) => setCurrentPassword(e.target.value)}
+                  onChange={(e) => setCurrentPassword(e.target.value)}
+                  disabled={loadingPassword}
                 className="h-11 bg-[var(--app-surface-hover)] border-[var(--app-border)] text-[var(--app-text-primary)]"
               />
             </div>
@@ -261,9 +284,10 @@ export function ProfilePage({ currentUser, onUpdateProfile }: ProfilePageProps) 
                 <Input
                   id="new-password"
                   type="password"
-                  placeholder="Mínimo 6 caracteres"
+                  placeholder="Mínimo 8 caracteres"
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
+                  disabled={loadingPassword}
                   className="h-11 bg-[var(--app-surface-hover)] border-[var(--app-border)] text-[var(--app-text-primary)]"
                 />
               </div>
@@ -278,6 +302,7 @@ export function ProfilePage({ currentUser, onUpdateProfile }: ProfilePageProps) 
                   placeholder="Digite novamente"
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
+                  disabled={loadingPassword}
                   className="h-11 bg-[var(--app-surface-hover)] border-[var(--app-border)] text-[var(--app-text-primary)]"
                 />
               </div>
@@ -286,11 +311,11 @@ export function ProfilePage({ currentUser, onUpdateProfile }: ProfilePageProps) 
             <div className="flex justify-end pt-2">
               <Button
                 onClick={handleUpdatePassword}
-                variant="outline"
-                className="border-[var(--app-border)] hover:bg-[var(--app-surface-hover)] text-[var(--app-text-primary)]"
+                disabled={loadingPassword}
+                className="bg-red-600 hover:bg-red-700 text-white border border-red-600 disabled:opacity-50"
               >
                 <Lock className="w-4 h-4 mr-2" />
-                Alterar Senha
+                {loadingPassword ? 'Alterando...' : 'Alterar Senha'}
               </Button>
             </div>
           </div>
