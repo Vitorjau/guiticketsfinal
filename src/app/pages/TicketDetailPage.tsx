@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ArrowLeft, Clock, User, Send, MoreVertical, AlertCircle, Download, FileText, Paperclip, Flag, Server, Users, Tag } from 'lucide-react';
+import { ArrowLeft, Clock, User, Send, MoreVertical, AlertCircle, Download, FileText, Paperclip, Flag, Server, Users, Tag, UserPlus } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { Textarea } from '../components/ui/textarea';
 import { Badge } from '../components/ui/badge';
@@ -19,6 +19,7 @@ interface TicketDetailPageProps {
   assignmentGroups: AssignmentGroup[];
   onAddMessage: (ticketId: string, content: string) => void;
   onUpdateStatus: (ticketId: string, status: Ticket['status']) => void;
+  onAssignTicket: (ticketId: string) => void;
   onBack: () => void;
   currentUser: UserType | null;
 }
@@ -30,7 +31,7 @@ const statusConfig = {
   completed: { label: 'Concluído', variant: 'secondary' as const },
 };
 
-export function TicketDetailPage({ ticket, assignmentGroups, onAddMessage, onUpdateStatus, onBack, currentUser }: TicketDetailPageProps) {
+export function TicketDetailPage({ ticket, assignmentGroups, onAddMessage, onUpdateStatus, onAssignTicket, onBack, currentUser }: TicketDetailPageProps) {
   const [newMessage, setNewMessage] = useState('');
 
   // Proteção contra currentUser undefined
@@ -133,14 +134,29 @@ export function TicketDetailPage({ ticket, assignmentGroups, onAddMessage, onUpd
             </div>
           </div>
           {currentUser.role === 'agent' && (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" className="border-[var(--app-border)] text-[var(--app-text-primary)] hover:bg-[var(--app-surface-hover)]">
-                  <MoreVertical className="w-4 h-4 mr-2" />
-                  Ações
+            <>
+              {ticket.status === 'open' && (
+                <Button
+                  onClick={() => onAssignTicket(ticket.id)}
+                  className="bg-[var(--app-blue-600)] hover:bg-[var(--app-blue-700)] text-white"
+                >
+                  <UserPlus className="w-4 h-4 mr-2" />
+                  Atribuir para mim
                 </Button>
-              </DropdownMenuTrigger>
+              )}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" className="border-[var(--app-border)] text-[var(--app-text-primary)] hover:bg-[var(--app-surface-hover)]">
+                    <MoreVertical className="w-4 h-4 mr-2" />
+                    Ações
+                  </Button>
+                </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="bg-[var(--app-surface)] border-[var(--app-border)]">
+                {ticket.status === 'open' && (
+                  <DropdownMenuItem onClick={() => onAssignTicket(ticket.id)} className="text-[var(--app-text-primary)] hover:bg-[var(--app-surface-hover)]">
+                    Atribuir para mim
+                  </DropdownMenuItem>
+                )}
                 <DropdownMenuItem onClick={() => handleChangeStatus('open')} className="text-[var(--app-text-primary)] hover:bg-[var(--app-surface-hover)]">
                   Marcar como Aberto
                 </DropdownMenuItem>
@@ -154,7 +170,8 @@ export function TicketDetailPage({ ticket, assignmentGroups, onAddMessage, onUpd
                   Marcar como Concluído
                 </DropdownMenuItem>
               </DropdownMenuContent>
-            </DropdownMenu>
+              </DropdownMenu>
+            </>
           )}
         </div>
       </div>

@@ -11,6 +11,32 @@ interface LoginPageProps {
   onGoToRegister: () => void;
 }
 
+// Função de validação de email
+const validateEmail = (email: string): boolean => {
+  const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return regex.test(email);
+};
+
+// Função de validação de senha
+const validatePassword = (password: string): { valid: boolean; message: string } => {
+  if (password.length < 8) {
+    return { valid: false, message: 'A senha deve ter pelo menos 8 caracteres' };
+  }
+  if (!/[A-Z]/.test(password)) {
+    return { valid: false, message: 'A senha deve conter pelo menos uma letra maiúscula' };
+  }
+  if (!/[a-z]/.test(password)) {
+    return { valid: false, message: 'A senha deve conter pelo menos uma letra minúscula' };
+  }
+  if (!/[0-9]/.test(password)) {
+    return { valid: false, message: 'A senha deve conter pelo menos um número' };
+  }
+  if (!/[!@#$%^&*(),.?":{}|<>]/.test(password)) {
+    return { valid: false, message: 'A senha deve conter pelo menos um caractere especial (!@#$%^&*...)' };
+  }
+  return { valid: true, message: 'Senha válida' };
+};
+
 export function LoginPage({ onLogin, onGoToRegister }: LoginPageProps) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -30,13 +56,14 @@ export function LoginPage({ onLogin, onGoToRegister }: LoginPageProps) {
       return;
     }
 
-    if (!email.includes('@')) {
-      setError('E-mail inválido');
+    if (!validateEmail(email)) {
+      setError('E-mail inválido. Use o formato: usuario@dominio.com');
       return;
     }
 
-    if (password.length < 3) {
-      setError('A senha deve ter pelo menos 3 caracteres');
+    const passwordValidation = validatePassword(password);
+    if (!passwordValidation.valid) {
+      setError(passwordValidation.message);
       return;
     }
 
@@ -126,7 +153,7 @@ export function LoginPage({ onLogin, onGoToRegister }: LoginPageProps) {
             <Input
               id="password"
               type="password"
-              placeholder="Digite qualquer senha (mínimo 3 caracteres)"
+              placeholder="Digite sua senha"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               className="h-11 bg-[var(--app-surface-hover)] border-[var(--app-border)] text-[var(--app-text-primary)] placeholder:text-[var(--app-text-tertiary)]"
@@ -137,7 +164,7 @@ export function LoginPage({ onLogin, onGoToRegister }: LoginPageProps) {
           <Button 
             type="submit" 
             className="w-full h-11 bg-[var(--app-blue-600)] hover:bg-[var(--app-blue-700)] text-white"
-            disabled={!email || !password || password.length < 3}
+            disabled={!email || !password || password.length < 8}
           >
             {isAgent ? 'Entrar como Agente' : 'Entrar'}
           </Button>

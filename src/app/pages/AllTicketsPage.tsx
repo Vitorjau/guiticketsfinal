@@ -1,5 +1,5 @@
 import { useState, MouseEvent } from 'react';
-import { Clock, User, Search, Inbox, Eye, UserPlus, CheckCircle2 } from 'lucide-react';
+import { Clock, User, Search, Inbox, Eye, UserPlus, CheckCircle2, RotateCcw } from 'lucide-react';
 import { Input } from '../components/ui/input';
 import { Badge } from '../components/ui/badge';
 import { Button } from '../components/ui/button';
@@ -10,10 +10,12 @@ import type { User as UserType } from '../App';
 
 interface AllTicketsPageProps {
   tickets: Ticket[];
+  allTickets?: Ticket[]; // Para exibir estatísticas de todos os chamados
   onViewTicket: (ticketId: string) => void;
   onAssignTicket: (ticketId: string) => void;
+  onReopenTicket?: (ticketId: string) => void;
   currentUser: UserType | null;
-  statusFilter?: 'open' | 'in-progress' | 'completed' | 'all';
+  statusFilter?: 'open' | 'in-progress' | 'waiting' | 'completed' | 'all';
   title: string;
   description: string;
 }
@@ -27,8 +29,10 @@ const statusConfig = {
 
 export function AllTicketsPage({ 
   tickets, 
+  allTickets,
   onViewTicket, 
   onAssignTicket,
+  onReopenTicket,
   currentUser,
   statusFilter = 'all',
   title,
@@ -40,6 +44,9 @@ export function AllTicketsPage({
   if (!currentUser) {
     return null;
   }
+
+  // Usa allTickets para estatísticas se disponível, senão usa tickets
+  const statsTickets = allTickets || tickets;
 
   const formatDate = (date: Date) => {
     return new Intl.DateTimeFormat('pt-BR', {
@@ -84,6 +91,17 @@ export function AllTicketsPage({
       });
     }
 
+    // Adiciona opção de reabrir para chamados concluídos
+    if (ticket.status === 'completed' && currentUser.role === 'agent' && onReopenTicket) {
+      items.push({
+        label: 'Reabrir chamado',
+        icon: RotateCcw,
+        onClick: () => {
+          onReopenTicket(ticket.id);
+        },
+      });
+    }
+
     setContextMenu({
       x: e.clientX,
       y: e.clientY,
@@ -111,25 +129,25 @@ export function AllTicketsPage({
           <div className="flex items-center gap-2">
             <div className="w-2 h-2 rounded-full bg-blue-500"></div>
             <span className="text-sm text-[var(--app-text-secondary)]">
-              {tickets.filter(t => t.status === 'open').length} Abertos
+              {statsTickets.filter(t => t.status === 'open').length} Abertos
             </span>
           </div>
           <div className="flex items-center gap-2">
             <div className="w-2 h-2 rounded-full bg-yellow-500"></div>
             <span className="text-sm text-[var(--app-text-secondary)]">
-              {tickets.filter(t => t.status === 'in-progress').length} Em Atendimento
+              {statsTickets.filter(t => t.status === 'in-progress').length} Em Atendimento
             </span>
           </div>
           <div className="flex items-center gap-2">
             <div className="w-2 h-2 rounded-full bg-purple-500"></div>
             <span className="text-sm text-[var(--app-text-secondary)]">
-              {tickets.filter(t => t.status === 'waiting').length} Aguardando
+              {statsTickets.filter(t => t.status === 'waiting').length} Aguardando
             </span>
           </div>
           <div className="flex items-center gap-2">
             <div className="w-2 h-2 rounded-full bg-green-500"></div>
             <span className="text-sm text-[var(--app-text-secondary)]">
-              {tickets.filter(t => t.status === 'completed').length} Concluídos
+              {statsTickets.filter(t => t.status === 'completed').length} Concluídos
             </span>
           </div>
         </div>

@@ -14,7 +14,7 @@ import { CreateTicketModal } from './components/CreateTicketModal';
 import { Toaster } from './components/ui/sonner';
 import { toast } from 'sonner';
 
-type Page = 'login' | 'register' | 'kanban' | 'my-tickets' | 'open-tickets' | 'in-progress-tickets' | 'completed-tickets' | 'ticket-detail' | 'profile';
+type Page = 'login' | 'register' | 'kanban' | 'my-tickets' | 'open-tickets' | 'in-progress-tickets' | 'waiting-tickets' | 'completed-tickets' | 'ticket-detail' | 'profile';
 type UserRole = 'requester' | 'agent';
 
 export interface AssignmentGroup {
@@ -381,6 +381,26 @@ function App() {
     });
   };
 
+  const handleReopenTicket = (ticketId: string) => {
+    setTickets(tickets.map(ticket => 
+      ticket.id === ticketId 
+        ? { 
+            ...ticket, 
+            status: 'open',
+            assignedTo: undefined,
+            assignedToEmail: undefined,
+            completedBy: undefined,
+            completedByEmail: undefined,
+            updatedAt: new Date() 
+          }
+        : ticket
+    ));
+
+    toast.success(`Chamado ${ticketId} reaberto!`, {
+      description: 'O chamado foi movido para Abertos.'
+    });
+  };
+
   const handleAddMessage = (ticketId: string, content: string) => {
     setTickets(tickets.map(ticket => {
       if (ticket.id === ticketId) {
@@ -543,6 +563,7 @@ function App() {
           {currentPage === 'open-tickets' && (
             <AllTicketsPage
               tickets={tickets.filter(t => t.status === 'open')}
+              allTickets={tickets}
               onViewTicket={handleViewTicket}
               onAssignTicket={handleAssignTicket}
               currentUser={currentUser}
@@ -554,6 +575,7 @@ function App() {
           {currentPage === 'in-progress-tickets' && (
             <AllTicketsPage
               tickets={tickets.filter(t => t.status === 'in-progress')}
+              allTickets={tickets}
               onViewTicket={handleViewTicket}
               onAssignTicket={handleAssignTicket}
               currentUser={currentUser}
@@ -562,11 +584,25 @@ function App() {
               description="Acompanhe os chamados que estão sendo resolvidos"
             />
           )}
+          {currentPage === 'waiting-tickets' && (
+            <AllTicketsPage
+              tickets={tickets.filter(t => t.status === 'waiting')}
+              allTickets={tickets}
+              onViewTicket={handleViewTicket}
+              onAssignTicket={handleAssignTicket}
+              currentUser={currentUser}
+              statusFilter="waiting"
+              title="Chamados Aguardando"
+              description="Chamados aguardando resposta ou ação do usuário"
+            />
+          )}
           {currentPage === 'completed-tickets' && (
             <AllTicketsPage
               tickets={tickets.filter(t => t.status === 'completed')}
+              allTickets={tickets}
               onViewTicket={handleViewTicket}
               onAssignTicket={handleAssignTicket}
+              onReopenTicket={handleReopenTicket}
               currentUser={currentUser}
               statusFilter="completed"
               title="Chamados Concluídos"
@@ -579,6 +615,7 @@ function App() {
               assignmentGroups={assignmentGroups}
               onAddMessage={handleAddMessage}
               onUpdateStatus={handleUpdateTicketStatus}
+              onAssignTicket={handleAssignTicket}
               onBack={() => setCurrentPage(currentUser.role === 'agent' ? 'kanban' : 'my-tickets')}
               currentUser={currentUser}
             />

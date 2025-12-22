@@ -1,5 +1,5 @@
 import { ReactNode } from 'react';
-import { LayoutDashboard, Ticket, Plus, Settings, LogOut, User, Shield, ListTodo, Clock, CheckCircle2 } from 'lucide-react';
+import { LayoutDashboard, Ticket, Plus, Settings, LogOut, User, Shield, ListTodo, Clock, CheckCircle2, AlertCircle } from 'lucide-react';
 import { Button } from './ui/button';
 import {
   DropdownMenu,
@@ -15,7 +15,7 @@ import type { User as UserType } from '../App';
 interface DashboardLayoutProps {
   children: ReactNode;
   currentPage: string;
-  onNavigate: (page: 'kanban' | 'my-tickets' | 'open-tickets' | 'in-progress-tickets' | 'completed-tickets' | 'profile') => void;
+  onNavigate: (page: 'kanban' | 'my-tickets' | 'open-tickets' | 'in-progress-tickets' | 'waiting-tickets' | 'completed-tickets' | 'profile') => void;
   currentUser: UserType | null;
   onLogout: () => void;
   onCreateTicket?: () => void;
@@ -43,6 +43,7 @@ export function DashboardLayout({
     { id: 'kanban', label: 'Kanban', icon: LayoutDashboard },
     { id: 'open-tickets', label: 'Chamados Abertos', icon: ListTodo },
     { id: 'in-progress-tickets', label: 'Em Atendimento', icon: Clock },
+    { id: 'waiting-tickets', label: 'Aguardando', icon: AlertCircle },
     { id: 'completed-tickets', label: 'Concluídos', icon: CheckCircle2 },
   ];
 

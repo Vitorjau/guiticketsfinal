@@ -14,6 +14,38 @@ interface RegisterPageProps {
 // Códigos de convite válidos (mock - em produção viriam do backend)
 const VALID_INVITE_CODES = ['AGENT2024', 'TEAMDEV', 'SUPPORT123'];
 
+// Função de validação de nome (apenas letras e espaços)
+const validateName = (name: string): boolean => {
+  const regex = /^[a-zA-ZÀ-ÿ\s]+$/;
+  return regex.test(name) && name.trim().length > 0;
+};
+
+// Função de validação de email
+const validateEmail = (email: string): boolean => {
+  const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return regex.test(email);
+};
+
+// Função de validação de senha
+const validatePassword = (password: string): { valid: boolean; message: string } => {
+  if (password.length < 8) {
+    return { valid: false, message: 'A senha deve ter pelo menos 8 caracteres' };
+  }
+  if (!/[A-Z]/.test(password)) {
+    return { valid: false, message: 'A senha deve conter pelo menos uma letra maiúscula' };
+  }
+  if (!/[a-z]/.test(password)) {
+    return { valid: false, message: 'A senha deve conter pelo menos uma letra minúscula' };
+  }
+  if (!/[0-9]/.test(password)) {
+    return { valid: false, message: 'A senha deve conter pelo menos um número' };
+  }
+  if (!/[!@#$%^&*(),.?":{}|<>]/.test(password)) {
+    return { valid: false, message: 'A senha deve conter pelo menos um caractere especial (!@#$%^&*...)' };
+  }
+  return { valid: true, message: 'Senha válida' };
+};
+
 export function RegisterPage({ onRegister, onBackToLogin }: RegisterPageProps) {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -38,6 +70,12 @@ export function RegisterPage({ onRegister, onBackToLogin }: RegisterPageProps) {
     setInviteCodeStatus(isValid ? 'valid' : 'invalid');
   };
 
+  const handleNameChange = (value: string) => {
+    // Permite apenas letras (maiúsculas, minúsculas, acentuadas) e espaços
+    const filteredValue = value.replace(/[^a-zA-ZÀ-ÿ\s]/g, '');
+    setName(filteredValue);
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
@@ -47,13 +85,19 @@ export function RegisterPage({ onRegister, onBackToLogin }: RegisterPageProps) {
       return;
     }
 
-    if (!email.includes('@')) {
-      setError('E-mail inválido');
+    if (!validateName(name)) {
+      setError('Nome inválido. Use apenas letras e espaços');
       return;
     }
 
-    if (password.length < 6) {
-      setError('A senha deve ter pelo menos 6 caracteres');
+    if (!validateEmail(email)) {
+      setError('E-mail inválido. Use o formato: usuario@dominio.com');
+      return;
+    }
+
+    const passwordValidation = validatePassword(password);
+    if (!passwordValidation.valid) {
+      setError(passwordValidation.message);
       return;
     }
 
@@ -104,7 +148,7 @@ export function RegisterPage({ onRegister, onBackToLogin }: RegisterPageProps) {
               type="text"
               placeholder="João Silva"
               value={name}
-              onChange={(e) => setName(e.target.value)}
+              onChange={(e) => handleNameChange(e.target.value)}
               className="h-11 bg-[var(--app-surface-hover)] border-[var(--app-border)] text-[var(--app-text-primary)] placeholder:text-[var(--app-text-tertiary)]"
             />
           </div>
@@ -126,11 +170,14 @@ export function RegisterPage({ onRegister, onBackToLogin }: RegisterPageProps) {
             <Input
               id="password"
               type="password"
-              placeholder="Mínimo 6 caracteres"
+              placeholder="Mínimo 8 caracteres (Aa1!)"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               className="h-11 bg-[var(--app-surface-hover)] border-[var(--app-border)] text-[var(--app-text-primary)] placeholder:text-[var(--app-text-tertiary)]"
             />
+            <p className="text-xs text-[var(--app-text-tertiary)]">
+              Deve conter: maiúsculas, minúsculas, números e caracteres especiais
+            </p>
           </div>
 
           {/* Link para revelar campo de código de convite */}
