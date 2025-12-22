@@ -23,6 +23,15 @@ let UsersService = class UsersService {
     findAll() {
         return this.prisma.user.findMany({ orderBy: { createdAt: 'desc' } });
     }
+    findByEmail(email) {
+        return this.prisma.user.findUnique({ where: { email } });
+    }
+    async findOrCreate(dto) {
+        const existing = await this.prisma.user.findUnique({ where: { email: dto.email } });
+        if (existing)
+            return existing;
+        return this.create(dto);
+    }
     async findOne(id) {
         const user = await this.prisma.user.findUnique({ where: { id } });
         if (!user)

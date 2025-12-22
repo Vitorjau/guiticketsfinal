@@ -5,9 +5,10 @@ import { Label } from '../components/ui/label';
 import { Card } from '../components/ui/card';
 import { AlertCircle, Info, ShieldCheck, User } from 'lucide-react';
 import { ThemeToggle } from '../components/ThemeToggle';
+import * as api from '../api/client';
 
 interface LoginPageProps {
-  onLogin: (email: string, password: string) => void;
+  onLogin: (user: any) => void;
   onGoToRegister: () => void;
 }
 
@@ -41,34 +42,44 @@ export function LoginPage({ onLogin, onGoToRegister }: LoginPageProps) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  // Detecta se é um agente baseado no email
-  const isAgent = email.trim().toLowerCase().includes('@agente.com');
   const isValidEmail = email.trim().includes('@') && email.trim().length > 3;
+  const isAgent = email.trim().toLowerCase().includes('@agente.com');
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    setLoading(true);
 
     // Validações
     if (!email || !password) {
       setError('Por favor, preencha todos os campos');
+      setLoading(false);
       return;
     }
 
     if (!validateEmail(email)) {
       setError('E-mail inválido. Use o formato: usuario@dominio.com');
+      setLoading(false);
       return;
     }
 
     const passwordValidation = validatePassword(password);
     if (!passwordValidation.valid) {
       setError(passwordValidation.message);
+      setLoading(false);
       return;
     }
 
-    // Tudo validado, faz o login
-    onLogin(email.trim().toLowerCase(), password);
+    // Call backend login
+    try {
+      const user = await api.login(email.trim().toLowerCase(), password);
+      onLogin(user);
+    } catch (err: any) {
+      setError(err.message || 'Erro ao fazer login');
+      setLoading(false);
+    }
   };
 
   return (
@@ -164,9 +175,9 @@ export function LoginPage({ onLogin, onGoToRegister }: LoginPageProps) {
           <Button 
             type="submit" 
             className="w-full h-11 bg-[var(--app-blue-600)] hover:bg-[var(--app-blue-700)] text-white"
-            disabled={!email || !password || password.length < 8}
+            disabled={!email || !password || password.length < 8 || loading}
           >
-            {isAgent ? 'Entrar como Agente' : 'Entrar'}
+            {loading ? 'Entrando...' : 'Entrar'}
           </Button>
 
           <div className="text-center">

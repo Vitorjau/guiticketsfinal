@@ -2,7 +2,30 @@ import pkg from '@prisma/client';
 const { PrismaClient } = pkg as any;
 const prisma = new PrismaClient();
 
+// Generate 10 random agent codes
+function generateAgentCodes(count: number): string[] {
+  const codes: string[] = [];
+  for (let i = 0; i < count; i++) {
+    codes.push(`AGENT-${String(i + 1).padStart(4, '0')}-${Math.random().toString(36).substring(2, 8).toUpperCase()}`);
+  }
+  return codes;
+}
+
 async function main() {
+  // Generate agent codes
+  const agentCodes = generateAgentCodes(10);
+
+  // Seed agent codes
+  for (const code of agentCodes) {
+    await prisma.agentCode.upsert({
+      where: { code },
+      update: {},
+      create: { code, used: false },
+    });
+  }
+
+  console.log('Agent codes created:', agentCodes);
+
   // Users
   const agent = await prisma.user.upsert({
     where: { email: 'suporte@agente.com' },
@@ -62,3 +85,4 @@ async function main() {
 main()
   .catch((e) => { console.error(e); process.exit(1); })
   .finally(async () => { await prisma.$disconnect(); });
+

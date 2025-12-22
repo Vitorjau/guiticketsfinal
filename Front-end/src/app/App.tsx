@@ -231,66 +231,44 @@ function App() {
     })();
   }, []);
 
-  const handleLogin = async (email: string, password: string) => {
-    // Normaliza o email (remove espaços e converte para lowercase)
-    const normalizedEmail = email.trim().toLowerCase();
+  const handleLogin = async (user: User) => {
+    // Set the user directly from the backend response
+    setCurrentUser(user);
     
-    // Mock login - Para demo, agente usa email com @agente.com
-    if (password.length >= 3) {
-      const role: UserRole = normalizedEmail.includes('@agente.com') ? 'agent' : 'requester';
-      const name = normalizedEmail.split('@')[0];
-
-      // Best-effort: ensure user exists in backend and use its id
-      try {
-        const beUser = await api.findOrCreateUser({
-          name: name.charAt(0).toUpperCase() + name.slice(1),
-          email: normalizedEmail,
-          passwordHash: password, // demo only, server expects a hash field name
-          role: role === 'agent' ? 'AGENT' : 'REQUESTER',
-        });
-        setCurrentUser({ id: beUser.id, name: beUser.name, email: beUser.email, role });
-      } catch {
-        setCurrentUser({ 
-          id: `user-${normalizedEmail}`,
-          name: name.charAt(0).toUpperCase() + name.slice(1),
-          email: normalizedEmail, 
-          role 
-        });
-      }
-
-      // Redireciona baseado no perfil
-      setCurrentPage(role === 'agent' ? 'kanban' : 'my-tickets');
-      
-      // Exibe mensagem de sucesso com toast
-      setTimeout(() => {
-        toast.success(
-          role === 'agent' ? 'Login como Agente realizado!' : 'Login realizado com sucesso!',
-          {
-            description: role === 'agent' 
-              ? `Bem-vindo ${name}! Acesso completo ao Kanban liberado.` 
-              : `Bem-vindo ${name}! Você pode visualizar seus chamados.`
-          }
-        );
-      }, 100);
-    }
+    // Redireciona baseado no perfil
+    setCurrentPage(user.role === 'agent' ? 'kanban' : 'my-tickets');
+    
+    // Exibe mensagem de sucesso com toast
+    setTimeout(() => {
+      toast.success(
+        user.role === 'agent' ? 'Login como Agente realizado!' : 'Login realizado com sucesso!',
+        {
+          description: user.role === 'agent' 
+            ? `Bem-vindo ${user.name}! Acesso completo ao Kanban liberado.` 
+            : `Bem-vindo ${user.name}! Você pode visualizar seus chamados.`
+        }
+      );
+    }, 100);
   };
 
-  const handleRegister = async (name: string, email: string, password: string, role: UserRole) => {
-    if (password.length > 0) {
-      const normalizedEmail = email.trim().toLowerCase();
-      try {
-        const beUser = await api.findOrCreateUser({
-          name,
-          email: normalizedEmail,
-          passwordHash: password,
-          role: role === 'agent' ? 'AGENT' : 'REQUESTER',
-        });
-        setCurrentUser({ id: beUser.id, name: beUser.name, email: beUser.email, role });
-      } catch {
-        setCurrentUser({ id: `user-${normalizedEmail}`, name, email: normalizedEmail, role });
-      }
-      setCurrentPage(role === 'agent' ? 'kanban' : 'my-tickets');
-    }
+  const handleRegister = async (user: User) => {
+    // Set the user directly from the backend response
+    setCurrentUser(user);
+    
+    // Redireciona baseado no perfil
+    setCurrentPage(user.role === 'agent' ? 'kanban' : 'my-tickets');
+
+    // Exibe mensagem de sucesso com toast
+    setTimeout(() => {
+      toast.success(
+        user.role === 'agent' ? 'Conta de Agente criada!' : 'Conta criada com sucesso!',
+        {
+          description: user.role === 'agent' 
+            ? `Bem-vindo ${user.name}! Acesso completo ao Kanban liberado.` 
+            : `Bem-vindo ${user.name}! Você pode visualizar seus chamados.`
+        }
+      );
+    }, 100);
   };
 
   const handleLogout = () => {

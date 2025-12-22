@@ -3,16 +3,14 @@ import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import { Card } from '../components/ui/card';
-import { AlertCircle, CheckCircle, X, ChevronDown } from 'lucide-react';
+import { AlertCircle } from 'lucide-react';
 import { ThemeToggle } from '../components/ThemeToggle';
+import * as api from '../api/client';
 
 interface RegisterPageProps {
-  onRegister: (name: string, email: string, password: string, role: 'requester' | 'agent') => void;
+  onRegister: (user: any) => void;
   onBackToLogin: () => void;
 }
-
-// Códigos de convite válidos (mock - em produção viriam do backend)
-const VALID_INVITE_CODES = ['AGENT2024', 'TEAMDEV', 'SUPPORT123'];
 
 // Função de validação de nome (apenas letras e espaços)
 const validateName = (name: string): boolean => {
@@ -51,24 +49,11 @@ export function RegisterPage({ onRegister, onBackToLogin }: RegisterPageProps) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-  
-  // Estados do código de convite
-  const [showInviteField, setShowInviteField] = useState(false);
-  const [inviteCode, setInviteCode] = useState('');
-  const [inviteCodeStatus, setInviteCodeStatus] = useState<'idle' | 'valid' | 'invalid'>('idle');
+  const [loading, setLoading] = useState(false);
+  const [agentCode, setAgentCode] = useState('');
 
-  const handleInviteCodeChange = (value: string) => {
-    setInviteCode(value.toUpperCase());
-    
-    if (value.trim() === '') {
-      setInviteCodeStatus('idle');
-      return;
-    }
-    
-    // Simula validação do código (em produção seria uma chamada ao backend)
-    const isValid = VALID_INVITE_CODES.includes(value.toUpperCase().trim());
-    setInviteCodeStatus(isValid ? 'valid' : 'invalid');
-  };
+  // Detecta automaticamente se é email de agente
+  const isAgentEmail = email.trim().toLowerCase().endsWith('@agente.com');
 
   const handleNameChange = (value: string) => {
     // Permite apenas letras (maiúsculas, minúsculas, acentuadas) e espaços
@@ -76,41 +61,51 @@ export function RegisterPage({ onRegister, onBackToLogin }: RegisterPageProps) {
     setName(filteredValue);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    setLoading(true);
 
     if (!name || !email || !password) {
       setError('Por favor, preencha todos os campos');
+      setLoading(false);
       return;
     }
 
     if (!validateName(name)) {
       setError('Nome inválido. Use apenas letras e espaços');
+      setLoading(false);
       return;
     }
 
     if (!validateEmail(email)) {
       setError('E-mail inválido. Use o formato: usuario@dominio.com');
+      setLoading(false);
       return;
     }
 
     const passwordValidation = validatePassword(password);
     if (!passwordValidation.valid) {
       setError(passwordValidation.message);
+      setLoading(false);
       return;
     }
 
-    // Se o campo de convite está visível mas o código é inválido
-    if (showInviteField && inviteCode.trim() !== '' && inviteCodeStatus === 'invalid') {
-      setError('Código de convite inválido. Remova-o ou use um código válido.');
+    // Se é email @agente.com, deve obrigatoriamente ter código de agente
+    if (isAgentEmail && !agentCode.trim()) {
+      setError('Código de agente é obrigatório para emails @agente.com');
+      setLoading(false);
       return;
     }
 
-    // Define o role baseado no código de convite
-    const role = inviteCodeStatus === 'valid' ? 'agent' : 'requester';
-    
-    onRegister(name, email, password, role);
+    // Call backend register
+    try {
+      const user = await api.register(name, email.trim().toLowerCase(), password, isAgentEmail ? agentCode.trim() : undefined);
+      onRegister(user);
+    } catch (err: any) {
+      setError(err.message || 'Erro ao registrar');
+      setLoading(false);
+    }
   };
 
   return (
@@ -150,6 +145,7 @@ export function RegisterPage({ onRegister, onBackToLogin }: RegisterPageProps) {
               value={name}
               onChange={(e) => handleNameChange(e.target.value)}
               className="h-11 bg-[var(--app-surface-hover)] border-[var(--app-border)] text-[var(--app-text-primary)] placeholder:text-[var(--app-text-tertiary)]"
+              disabled={loading}
             />
           </div>
 
@@ -162,6 +158,7 @@ export function RegisterPage({ onRegister, onBackToLogin }: RegisterPageProps) {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               className="h-11 bg-[var(--app-surface-hover)] border-[var(--app-border)] text-[var(--app-text-primary)] placeholder:text-[var(--app-text-tertiary)]"
+              disabled={loading}
             />
           </div>
 
@@ -174,146 +171,70 @@ export function RegisterPage({ onRegister, onBackToLogin }: RegisterPageProps) {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               className="h-11 bg-[var(--app-surface-hover)] border-[var(--app-border)] text-[var(--app-text-primary)] placeholder:text-[var(--app-text-tertiary)]"
+              disabled={loading}
             />
             <p className="text-xs text-[var(--app-text-tertiary)]">
               Deve conter: maiúsculas, minúsculas, números e caracteres especiais
             </p>
           </div>
 
-          {/* Link para revelar campo de código de convite */}
-          {!showInviteField && (
-            <div className="pt-2">
-              <button
-                type="button"
-                onClick={() => setShowInviteField(true)}
-                className="text-sm text-[var(--app-text-secondary)] hover:text-[var(--app-blue-600)] transition-colors flex items-center gap-1 group"
-              >
-                <ChevronDown className="w-4 h-4 transition-transform group-hover:translate-y-0.5" />
-                É membro de uma equipe? Insira o código de convite
-              </button>
+          {/* Info box sobre tipo de conta */}
+          {email && (
+            <div className={`p-3 rounded-lg text-sm transition-all ${
+              isAgentEmail
+                ? 'bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 text-blue-800 dark:text-blue-300'
+                : 'bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 text-green-800 dark:text-green-300'
+            }`}>
+              <p className="font-medium mb-1">
+                {isAgentEmail ? '👤 Será cadastrado como Agente' : '👥 Será cadastrado como Solicitante'}
+              </p>
+              <p className="text-xs opacity-90">
+                {isAgentEmail 
+                  ? 'Você terá acesso completo ao painel de agentes'
+                  : 'Você pode criar e acompanhar seus chamados'}
+              </p>
             </div>
           )}
 
-          {/* Campo de código de convite com animação */}
-          {showInviteField && (
-            <div 
-              className="space-y-2 animate-in slide-in-from-top-2 duration-300"
-              style={{
-                animation: 'slideDown 0.3s ease-out'
-              }}
-            >
-              <div className="flex items-center justify-between">
-                <Label htmlFor="inviteCode" className="text-[var(--app-text-primary)]">
-                  Código de Convite da Equipe
-                </Label>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowInviteField(false);
-                    setInviteCode('');
-                    setInviteCodeStatus('idle');
-                  }}
-                  className="text-xs text-[var(--app-text-tertiary)] hover:text-[var(--app-text-primary)] transition-colors"
-                >
-                  Remover
-                </button>
-              </div>
-              
-              <div className="relative">
-                <Input
-                  id="inviteCode"
-                  type="text"
-                  placeholder="Ex: AGENT2024"
-                  value={inviteCode}
-                  onChange={(e) => handleInviteCodeChange(e.target.value)}
-                  className={`h-11 pr-10 bg-[var(--app-surface-hover)] text-[var(--app-text-primary)] placeholder:text-[var(--app-text-tertiary)] transition-all ${
-                    inviteCodeStatus === 'valid' 
-                      ? 'border-green-500 dark:border-green-600 focus-visible:ring-green-500/20' 
-                      : inviteCodeStatus === 'invalid'
-                      ? 'border-red-500 dark:border-red-600 focus-visible:ring-red-500/20'
-                      : 'border-[var(--app-border)]'
-                  }`}
-                />
-                
-                {/* Ícone de status */}
-                {inviteCodeStatus === 'valid' && (
-                  <div className="absolute right-3 top-1/2 -translate-y-1/2 animate-in zoom-in duration-200">
-                    <CheckCircle className="w-5 h-5 text-green-500 dark:text-green-400" />
-                  </div>
-                )}
-                
-                {inviteCodeStatus === 'invalid' && (
-                  <div className="absolute right-3 top-1/2 -translate-y-1/2 animate-in zoom-in duration-200">
-                    <div className="w-5 h-5 bg-red-500 dark:bg-red-600 rounded-full flex items-center justify-center">
-                      <X className="w-3 h-3 text-white" />
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* Mensagem de feedback */}
-              {inviteCodeStatus === 'valid' && (
-                <div className="flex items-start gap-2 p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg animate-in slide-in-from-top-1 duration-200">
-                  <CheckCircle className="w-4 h-4 text-green-600 dark:text-green-400 flex-shrink-0 mt-0.5" />
-                  <div>
-                    <p className="text-sm text-green-800 dark:text-green-300 font-medium">
-                      Código válido
-                    </p>
-                    <p className="text-xs text-green-700 dark:text-green-400 mt-0.5">
-                      Seu perfil será de Agente com acesso completo ao sistema
-                    </p>
-                  </div>
-                </div>
-              )}
-
-              {inviteCodeStatus === 'invalid' && (
-                <div className="flex items-start gap-2 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg animate-in slide-in-from-top-1 duration-200">
-                  <AlertCircle className="w-4 h-4 text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5" />
-                  <div>
-                    <p className="text-sm text-red-800 dark:text-red-300 font-medium">
-                      Código de convite inválido
-                    </p>
-                    <p className="text-xs text-red-700 dark:text-red-400 mt-0.5">
-                      Verifique o código com o administrador da sua equipe
-                    </p>
-                  </div>
-                </div>
-              )}
+          {/* Campo de código de agente - aparece apenas para emails @agente.com */}
+          {isAgentEmail && (
+            <div className="space-y-2 animate-in slide-in-from-top-2 duration-300">
+              <Label htmlFor="agentCode" className="text-[var(--app-text-primary)]">Código de Agente *</Label>
+              <Input
+                id="agentCode"
+                type="text"
+                placeholder="Ex: AGENT-0001-XXXXXX"
+                value={agentCode}
+                onChange={(e) => setAgentCode(e.target.value.toUpperCase())}
+                className="h-11 bg-[var(--app-surface-hover)] border-[var(--app-border)] text-[var(--app-text-primary)] placeholder:text-[var(--app-text-tertiary)]"
+                disabled={loading}
+              />
+              <p className="text-xs text-[var(--app-text-tertiary)]">
+                Código único obrigatório para registro de agentes. Cada código pode ser usado apenas uma vez.
+              </p>
             </div>
           )}
 
           <Button 
             type="submit" 
-            className="w-full h-11 bg-[var(--app-blue-600)] hover:bg-[var(--app-blue-700)] text-white transition-all"
+            className="w-full h-11 bg-[var(--app-blue-600)] hover:bg-[var(--app-blue-700)] text-white transition-all disabled:opacity-50"
+            disabled={loading}
           >
-            {inviteCodeStatus === 'valid' ? 'Criar Conta de Agente' : 'Criar Conta'}
+            {loading ? 'Criando conta...' : 'Criar Conta'}
           </Button>
 
           <div className="text-center">
             <button
               type="button"
               onClick={onBackToLogin}
-              className="text-sm text-[var(--app-blue-600)] hover:text-[var(--app-blue-700)] hover:underline"
+              className="text-sm text-[var(--app-blue-600)] hover:text-[var(--app-blue-700)] hover:underline disabled:opacity-50"
+              disabled={loading}
             >
               Já tenho conta
             </button>
           </div>
         </form>
       </Card>
-
-      {/* CSS para animação de slide down */}
-      <style>{`
-        @keyframes slideDown {
-          from {
-            opacity: 0;
-            transform: translateY(-10px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-      `}</style>
     </div>
   );
 }

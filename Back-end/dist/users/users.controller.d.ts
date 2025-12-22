@@ -26,6 +26,7 @@ export declare class UsersController {
         createdAt: Date;
         updatedAt: Date;
     }[]>;
+    findByEmail(email: string): any;
     findOne(id: string): Promise<{
         name: string;
         email: string;
@@ -59,4 +60,5 @@ export declare class UsersController {
         createdAt: Date;
         updatedAt: Date;
     }>;
+    findOrCreate(dto: CreateUserDto): Promise<any>;
 }

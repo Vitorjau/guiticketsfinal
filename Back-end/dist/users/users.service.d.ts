@@ -26,6 +26,8 @@ export declare class UsersService {
         createdAt: Date;
         updatedAt: Date;
     }[]>;
+    findByEmail(email: string): any;
+    findOrCreate(dto: CreateUserDto): Promise<any>;
     findOne(id: string): Promise<{
         name: string;
         email: string;

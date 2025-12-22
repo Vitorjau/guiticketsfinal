@@ -99,18 +99,36 @@ $ npm run test:e2e
 $ npm run test:cov
 ```
 
-## Deployment
+## Deployment (Cloud)
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
+Recommended setup:
+- Backend: containerized with Docker (this repo includes a Dockerfile).
+- Database: managed Postgres (AWS RDS, Azure Database for PostgreSQL, Supabase, Neon).
+- Front-end: static hosting (Vercel, Netlify, or S3+CDN) pointing to the backend API.
 
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
-
+Build & run Docker locally
 ```bash
-$ npm install -g @nestjs/mau
-$ mau deploy
+# from Back-end/
+docker build -t guitickets-backend:latest .
+# set DATABASE_URL at runtime (managed Postgres)
+docker run -e DATABASE_URL="postgresql://<user>:<pass>@<host>:<port>/<db>?schema=public" -e PORT=3000 -p 3000:3000 guitickets-backend:latest
 ```
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+Push image (example Docker Hub)
+```bash
+# login and tag accordingly
+docker tag guitickets-backend:latest <your-dockerhub-username>/guitickets-backend:latest
+docker push <your-dockerhub-username>/guitickets-backend:latest
+```
+
+Deploy
+- Use your cloud provider’s container service (Azure Web App for Containers, AWS ECS/Fargate, Render, Railway).
+- Set environment variables: `DATABASE_URL`, optional `PORT`.
+- Ensure the Postgres instance is reachable (network, firewall, SSL).
+
+Front-end
+- Set `VITE_API_URL` to your public backend URL.
+- Deploy React app via Vercel/Netlify (build and serve static files).
 
 ## Resources
 

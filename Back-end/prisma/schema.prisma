@@ -47,6 +47,14 @@ model User {
   updatedAt DateTime @updatedAt
 }
 
+model AgentCode {
+  id        String  @id @default(cuid())
+  code      String  @unique
+  used      Boolean @default(false)
+  usedBy    String? // userId that used this code
+  createdAt DateTime @default(now())
+}
+
 model AssignmentGroup {
   id          String  @id @default(cuid())
   key         String  @unique

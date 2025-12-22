@@ -78,6 +78,33 @@ export async function findOrCreateUser(payload: { name: string; email: string; p
   return await res.json();
 }
 
+// Auth endpoints (new)
+export async function login(email: string, password: string) {
+  const res = await fetch(`${BASE_URL}/auth/login`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, password })
+  });
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({}));
+    throw new Error(errorData.message || 'Email ou senha inválidos');
+  }
+  return await res.json();
+}
+
+export async function register(name: string, email: string, password: string, agentCode?: string) {
+  const res = await fetch(`${BASE_URL}/auth/register`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name, email, password, agentCode })
+  });
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({}));
+    throw new Error(errorData.message || 'Erro ao registrar');
+  }
+  return await res.json();
+}
+
 // Tickets CRUD
 export async function createTicket(payload: { id: string; title: string; description: string; authorId: string; priority?: 'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT'; relatedSystem?: string; assignmentGroupId?: string; }) {
   const res = await fetch(`${BASE_URL}/tickets`, {
