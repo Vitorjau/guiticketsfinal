@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { Eye, Trash2, Edit, LucideIcon } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 
 export interface ContextMenuItem {
   label: string;

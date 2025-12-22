@@ -5,7 +5,8 @@ import type { Ticket, Task } from '../App';
 import { Button } from '../components/ui/button';
 import { CreateTaskWarningModal } from '../components/CreateTaskWarningModal';
 import { CreateTaskModal } from '../components/CreateTaskModal';
-import { ContextMenu, ContextMenuItem } from '../components/ContextMenu';
+import { ContextMenu } from '../components/ContextMenu';
+import type { ContextMenuItem } from '../components/ContextMenu';
 import { DeleteConfirmationModal } from '../components/DeleteConfirmationModal';
 import { TaskDetailModal } from '../components/TaskDetailModal';
 

@@ -1,5 +1,13 @@
 {
   "files": [],
+  "compilerOptions": {
+    "jsx": "react-jsx",
+    "module": "ESNext",
+    "allowSyntheticDefaultImports": true,
+    "moduleResolution": "node",
+    "types": ["vite/client"],
+    "strict": true
+  },
   "references": [
     { "path": "./tsconfig.app.json" },
     { "path": "./tsconfig.node.json" }

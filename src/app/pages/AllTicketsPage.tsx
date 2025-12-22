@@ -3,7 +3,8 @@ import { Clock, User, Search, Inbox, Eye, UserPlus, CheckCircle2 } from 'lucide-
 import { Input } from '../components/ui/input';
 import { Badge } from '../components/ui/badge';
 import { Button } from '../components/ui/button';
-import { ContextMenu, ContextMenuItem } from '../components/ContextMenu';
+import { ContextMenu } from '../components/ContextMenu';
+import type { ContextMenuItem } from '../components/ContextMenu';
 import type { Ticket } from '../App';
 import type { User as UserType } from '../App';
 

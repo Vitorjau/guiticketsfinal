@@ -60,6 +60,7 @@ export interface TicketMessage {
 }
 
 export interface User {
+  id: string;
   name: string;
   email: string;
   role: UserRole;
@@ -86,7 +87,7 @@ function App() {
   const [tasks, setTasks] = useState<Task[]>([]);
   
   // Grupos de atribuição padrão
-  const [assignmentGroups, setAssignmentGroups] = useState<AssignmentGroup[]>([
+  const [assignmentGroups] = useState<AssignmentGroup[]>([
     { id: 'suporte-ti', name: 'Suporte TI', color: '#3b82f6', description: 'Equipe de suporte técnico' },
     { id: 'infraestrutura', name: 'Infraestrutura', color: '#8b5cf6', description: 'Equipe de infraestrutura e redes' },
     { id: 'rh', name: 'Recursos Humanos', color: '#ec4899', description: 'Departamento de RH' },
@@ -225,6 +226,7 @@ function App() {
       const name = normalizedEmail.split('@')[0];
       
       setCurrentUser({ 
+        id: `user-${normalizedEmail}`,
         name: name.charAt(0).toUpperCase() + name.slice(1), // Capitaliza primeira letra
         email: normalizedEmail, 
         role 
@@ -250,7 +252,8 @@ function App() {
   const handleRegister = (name: string, email: string, password: string, role: UserRole) => {
     // Mock register
     if (password.length > 0) {
-      setCurrentUser({ name, email, role });
+      const normalizedEmail = email.trim().toLowerCase();
+      setCurrentUser({ id: `user-${normalizedEmail}`, name, email: normalizedEmail, role });
       // Redireciona baseado no perfil
       setCurrentPage(role === 'agent' ? 'kanban' : 'my-tickets');
     }
@@ -490,6 +493,10 @@ function App() {
     );
   }
 
+  const selectedTicket = selectedTicketId
+    ? tickets.find(t => t.id === selectedTicketId)
+    : null;
+
   return (
     <ThemeProvider>
       <DndProvider backend={HTML5Backend}>
@@ -566,9 +573,9 @@ function App() {
               description="Histórico de chamados finalizados"
             />
           )}
-          {currentPage === 'ticket-detail' && selectedTicketId && (
+          {currentPage === 'ticket-detail' && selectedTicket && (
             <TicketDetailPage
-              ticket={tickets.find(t => t.id === selectedTicketId)!}
+              ticket={selectedTicket}
               assignmentGroups={assignmentGroups}
               onAddMessage={handleAddMessage}
               onUpdateStatus={handleUpdateTicketStatus}
