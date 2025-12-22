@@ -1,7 +1,6 @@
 
   # SN Gui
 
-  This is a code bundle for SN Gui. The original project is available at https://www.figma.com/design/OyrEeDKbMkSucvM74msqxl/SN-Gui.
 
   ## Running the code
 
