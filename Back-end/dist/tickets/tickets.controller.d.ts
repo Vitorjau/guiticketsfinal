@@ -15,4 +15,5 @@ export declare class TicketsController {
     reopen(id: string): Promise<any>;
     updateStatus(id: string, dto: UpdateStatusDto): Promise<any>;
     addMessage(id: string, dto: AddMessageDto): Promise<any>;
+    addAttachments(id: string, dto: any): Promise<any>;
 }

@@ -113,6 +113,26 @@ let TicketsService = class TicketsService {
             },
         });
     }
+    async addAttachments(id, dto) {
+        await this.findOne(id);
+        const items = Array.isArray(dto) ? dto : [dto];
+        if (!items.length)
+            throw new common_1.BadRequestException('No attachments provided');
+        const created = [];
+        for (const a of items) {
+            const att = await this.prisma.attachment.create({
+                data: {
+                    ticket: { connect: { id } },
+                    name: a.name,
+                    size: a.size,
+                    mimeType: a.mimeType,
+                    url: a.url,
+                },
+            });
+            created.push(att);
+        }
+        return created.length === 1 ? created[0] : created;
+    }
 };
 exports.TicketsService = TicketsService;
 exports.TicketsService = TicketsService = __decorate([

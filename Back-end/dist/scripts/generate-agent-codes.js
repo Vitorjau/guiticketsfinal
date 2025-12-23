@@ -23,7 +23,7 @@ async function getMaxIndex() {
     return max;
 }
 async function main() {
-    const COUNT = 50;
+    const COUNT = 30;
     const start = (await getMaxIndex()) + 1;
     const generated = [];
     for (let i = 0; i < COUNT; i++) {

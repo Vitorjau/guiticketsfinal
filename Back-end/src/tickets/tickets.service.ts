@@ -4,7 +4,6 @@ import { CreateTicketDto } from './dto/create-ticket.dto';
 import { UpdateTicketDto } from './dto/update-ticket.dto';
 import { UpdateStatusDto } from './dto/update-status.dto';
 import { AddMessageDto } from './dto/add-message.dto';
-import { AddAttachmentDto } from './dto/add-attachment.dto';
 
 @Injectable()
 export class TicketsService {
@@ -115,11 +114,11 @@ export class TicketsService {
     });
   }
 
-  async addAttachments(id: string, dto: AddAttachmentDto | AddAttachmentDto[]) {
+  async addAttachments(id: string, dto: any) {
     await this.findOne(id);
     const items = Array.isArray(dto) ? dto : [dto];
     if (!items.length) throw new BadRequestException('No attachments provided');
-    // Create many is not available for relations with Prisma's nested createMany for this relation shape; do loop.
+    
     const created = [] as any[];
     for (const a of items) {
       const att = await (this.prisma as any).attachment.create({

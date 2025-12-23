@@ -4,7 +4,6 @@ import { CreateTicketDto } from './dto/create-ticket.dto';
 import { UpdateTicketDto } from './dto/update-ticket.dto';
 import { UpdateStatusDto } from './dto/update-status.dto';
 import { AddMessageDto } from './dto/add-message.dto';
-import { AddAttachmentDto } from './dto/add-attachment.dto';
 
 @Controller('tickets')
 export class TicketsController {
@@ -59,7 +58,7 @@ export class TicketsController {
   @Post(':id/attachments')
   addAttachments(
     @Param('id') id: string,
-    @Body() dto: AddAttachmentDto | AddAttachmentDto[],
+    @Body() dto: any, // Aceita objeto ou array sem DTO por enquanto
   ) {
     return this.ticketsService.addAttachments(id, dto);
   }

@@ -51,6 +51,9 @@ let TicketsController = class TicketsController {
     addMessage(id, dto) {
         return this.ticketsService.addMessage(id, dto);
     }
+    addAttachments(id, dto) {
+        return this.ticketsService.addAttachments(id, dto);
+    }
 };
 exports.TicketsController = TicketsController;
 __decorate([
@@ -119,6 +122,14 @@ __decorate([
     __metadata("design:paramtypes", [String, add_message_dto_1.AddMessageDto]),
     __metadata("design:returntype", void 0)
 ], TicketsController.prototype, "addMessage", null);
+__decorate([
+    (0, common_1.Post)(':id/attachments'),
+    __param(0, (0, common_1.Param)('id')),
+    __param(1, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object]),
+    __metadata("design:returntype", void 0)
+], TicketsController.prototype, "addAttachments", null);
 exports.TicketsController = TicketsController = __decorate([
     (0, common_1.Controller)('tickets'),
     __metadata("design:paramtypes", [tickets_service_1.TicketsService])
