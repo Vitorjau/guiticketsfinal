@@ -1156,3 +1156,75 @@ model TicketMessage {
 **Versão do Documento**: 1.0.0  
 **Última Atualização**: 23 de Dezembro de 2025  
 **Autor**: Equipe GuiTickets
+
+---
+
+## 14. CRUDs Simplificados
+
+### 14.1. Conceito
+- **Create**: criar um registro novo
+- **Read**: listar/buscar registros existentes
+- **Update**: atualizar campos de um registro
+- **Delete**: remover um registro
+
+### 14.2. Tickets (principal)
+
+- **Create**: `POST /tickets`
+  - Campos mínimos: `title`, `description?`, `priority`, `relatedSystem?`, `authorId`
+  - Resultado: ticket com `id` no formato `TCK-0001`, `status=OPEN`
+  - Exemplo:
+    ```json
+    {
+      "title": "Computador não liga",
+      "description": "Ao pressionar o power...",
+      "priority": "high",
+      "relatedSystem": "infraestrutura",
+      "authorId": "<userId>"
+    }
+    ```
+
+- **Read (lista)**: `GET /tickets`
+  - Filtros opcionais: `status`, `assignedToId`, `authorId`
+  - Uso comum: agentes listam todos; solicitantes listam os próprios
+
+- **Read (detalhe)**: `GET /tickets/:id`
+  - Retorna: ticket + `messages`, `attachments`, `tags`
+
+- **Update**: `PATCH /tickets/:id`
+  - Atualiza campos como `title`, `description`, `priority`, `relatedSystem`, `assignmentGroupId`
+  - Ações específicas (mantidas como endpoints dedicados):
+    - Atribuir: `POST /tickets/:id/assign/:userId` → define responsável e muda `status` para `IN_PROGRESS`
+    - Mudar status: `POST /tickets/:id/status` → `OPEN | IN_PROGRESS | WAITING | COMPLETED | CANCELLED`
+    - Reabrir: `POST /tickets/:id/reopen` → volta para `OPEN`
+    - Mensagem: `POST /tickets/:id/messages` → adiciona comunicação ao histórico
+
+- **Delete**: `DELETE /tickets/:id`
+  - Uso raro (auditoria pode preferir cancelar ao invés de deletar)
+
+### 14.3. Usuários
+
+- **Create**: `POST /auth/register` (solicitante) / `POST /auth/register` com `agentCode` (agente)
+- **Read**: `GET /users` (lista), `GET /users/:id` (detalhe)
+- **Update**: `PATCH /users/:id/profile` (dados pessoais), `PATCH /users/:id/password` (senha)
+- **Delete**: `DELETE /users/:id` (admin)
+
+### 14.4. Tarefas (Kanban)
+
+- **Create**: `POST /tasks` (ex.: `id=TASK-0050`, `title`, `status=TODO`)
+- **Read**: `GET /tasks` (filtro por `status`)
+- **Update**: `PATCH /tasks/:id` (mudar `status`, `title`, `description`, `priority`)
+- **Delete**: `DELETE /tasks/:id`
+
+### 14.5. Grupos de Atribuição
+
+- **Create**: `POST /assignment-groups` (ex.: `key`, `name`, `color?`, `description?`)
+- **Read**: `GET /assignment-groups`
+- **Update**: `PATCH /assignment-groups/:id`
+- **Delete**: `DELETE /assignment-groups/:id`
+
+### 14.6. Códigos de Agente
+
+- **Create**: gerados via script `npm run codes:generate` (armazenados em `AgentCode`)
+- **Read**: `GET /invite-codes/:code` (validação rápida)
+- **Update**: marcado como `used=true` ao registrar um agente
+- **Delete**: normalmente não utilizado (manter histórico)
