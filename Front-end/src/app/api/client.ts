@@ -159,6 +159,17 @@ export async function addMessage(id: string, payload: { content: string; authorI
   return await res.json();
 }
 
+// Attachments
+export async function addAttachment(ticketId: string, payload: { name: string; size: number; mimeType: string; url: string }) {
+  const res = await fetch(`${BASE_URL}/tickets/${ticketId}/attachments`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) throw new Error('Failed to add attachment');
+  return await res.json();
+}
+
 // Profile endpoints
 export async function updateProfile(userId: string, payload: { name?: string; email?: string; phone?: string; gender?: string }) {
   const res = await fetch(`${BASE_URL}/users/${userId}/profile`, {

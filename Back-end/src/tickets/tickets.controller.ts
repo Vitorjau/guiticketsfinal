@@ -4,6 +4,7 @@ import { CreateTicketDto } from './dto/create-ticket.dto';
 import { UpdateTicketDto } from './dto/update-ticket.dto';
 import { UpdateStatusDto } from './dto/update-status.dto';
 import { AddMessageDto } from './dto/add-message.dto';
+import { AddAttachmentDto } from './dto/add-attachment.dto';
 
 @Controller('tickets')
 export class TicketsController {
@@ -52,5 +53,14 @@ export class TicketsController {
   @Post(':id/messages')
   addMessage(@Param('id') id: string, @Body() dto: AddMessageDto) {
     return this.ticketsService.addMessage(id, dto);
+  }
+
+  // MVP: registra metadados de anexos já uploadados (ex.: Cloudinary URL)
+  @Post(':id/attachments')
+  addAttachments(
+    @Param('id') id: string,
+    @Body() dto: AddAttachmentDto | AddAttachmentDto[],
+  ) {
+    return this.ticketsService.addAttachments(id, dto);
   }
 }

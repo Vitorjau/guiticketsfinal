@@ -357,6 +357,28 @@ function App() {
           relatedSystem: data.relatedSystem,
           assignmentGroupId: assignedGroupId,
         });
+
+        // MVP upload: se variáveis Cloudinary estiverem configuradas, faz upload e registra anexos
+        const cloudName = (import.meta as any).env?.VITE_CLOUDINARY_CLOUD_NAME;
+        const uploadPreset = (import.meta as any).env?.VITE_CLOUDINARY_UPLOAD_PRESET;
+        const files = data.attachments || [];
+        if (cloudName && uploadPreset && files.length) {
+          const uploadFile = async (file: File) => {
+            const form = new FormData();
+            form.append('file', file);
+            form.append('upload_preset', uploadPreset);
+            const res = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/upload`, { method: 'POST', body: form });
+            if (!res.ok) throw new Error('Falha no upload do anexo');
+            const json = await res.json();
+            return json.secure_url as string;
+          };
+          for (const file of files) {
+            try {
+              const url = await uploadFile(file);
+              await api.addAttachment(newId, { name: file.name, size: file.size, mimeType: file.type, url });
+            } catch {}
+          }
+        }
       }
     } catch {}
   };
