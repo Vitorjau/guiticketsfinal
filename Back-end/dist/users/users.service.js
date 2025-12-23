@@ -49,7 +49,7 @@ let UsersService = class UsersService {
             if (existing)
                 throw new common_1.BadRequestException('Email já cadastrado');
         }
-        return this.prisma.user.update({
+        const updated = await this.prisma.user.update({
             where: { id },
             data: {
                 name: dto.name || user.name,
@@ -59,6 +59,10 @@ let UsersService = class UsersService {
                 updatedAt: new Date()
             }
         });
+        return {
+            ...updated,
+            role: updated.role.toLowerCase()
+        };
     }
     async changePassword(id, dto) {
         const user = await this.findOne(id);
@@ -71,13 +75,17 @@ let UsersService = class UsersService {
         if (dto.newPassword === dto.currentPassword) {
             throw new common_1.BadRequestException('Nova senha deve ser diferente da senha atual');
         }
-        return this.prisma.user.update({
+        const updated = await this.prisma.user.update({
             where: { id },
             data: {
                 passwordHash: dto.newPassword,
                 updatedAt: new Date()
             }
         });
+        return {
+            ...updated,
+            role: updated.role.toLowerCase()
+        };
     }
     async remove(id) {
         await this.findOne(id);

@@ -52,10 +52,10 @@ export declare class UsersController {
         updatedAt: Date;
     }>;
     updateProfile(id: string, dto: UpdateProfileDto): Promise<{
+        role: string;
         name: string;
         email: string;
         passwordHash: string;
-        role: import("@prisma/client").$Enums.Role;
         gender: string | null;
         phone: string | null;
         id: string;
@@ -63,10 +63,10 @@ export declare class UsersController {
         updatedAt: Date;
     }>;
     changePassword(id: string, dto: ChangePasswordDto): Promise<{
+        role: string;
         name: string;
         email: string;
         passwordHash: string;
-        role: import("@prisma/client").$Enums.Role;
         gender: string | null;
         phone: string | null;
         id: string;

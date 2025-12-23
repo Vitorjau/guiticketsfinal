@@ -36,7 +36,7 @@ Esses códigos são necessários para se registrar como **Agente** na aplicaçã
 14. `AGENT-0014-VB78YG`
 15. `AGENT-0015-4RXRJ9`
 16. `AGENT-0016-S3YMUW`
-17. `AGENT-0017-3YUY0M`
+17. `AGENT-0017-3YUY0M` ok
 18. `AGENT-0018-2C4HIX`
 19. `AGENT-0019-3K3SH0`
 20. `AGENT-0020-FSIM41`
@@ -47,7 +47,7 @@ Esses códigos são necessários para se registrar como **Agente** na aplicaçã
 25. `AGENT-0025-DQMM34`
 26. `AGENT-0026-55CBS5`
 27. `AGENT-0027-RC8CDV`
-28. `AGENT-0028-ESPME4`
+28. `AGENT-0028-ESPME4`ok
 29. `AGENT-0029-YNBWXJ`
 30. `AGENT-0030-WJ4MRK`
 31. `AGENT-0031-S2QZ7I`
