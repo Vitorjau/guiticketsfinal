@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: guitickets-backend
+    env: node
+    region: oregon
+    plan: free
+    buildCommand: npm install && npm run prisma:generate && npm run build
+    startCommand: npm run start:prod
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: PORT
+        value: "3001"
+      - key: CORS_ORIGIN
+        value: "https://guitickets.vercel.app"
+      - key: NODE_ENV
+        value: "production"
