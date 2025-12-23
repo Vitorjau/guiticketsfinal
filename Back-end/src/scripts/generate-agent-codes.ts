@@ -20,7 +20,7 @@ async function getMaxIndex(): Promise<number> {
 }
 
 async function main() {
-  const COUNT = 50;
+  const COUNT = 30;
   const start = (await getMaxIndex()) + 1;
   const generated: string[] = [];
 
